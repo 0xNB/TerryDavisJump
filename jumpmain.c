@@ -6,11 +6,16 @@
 #include <math.h>
 #include <stdlib.h>
 
+FILE *holytext;
+char holy[500];
+int sacred_counter = 0;
+int holyc = 0;
 int max_x = 0, max_y = 0;
 char input[100];
 long last = 0;
 const char nigger[] = "NIGGER";
 long current = 0;
+long textcurrent = 0;
 struct timespec spec;
 struct Player{
   int x,y;
@@ -45,9 +50,9 @@ struct Map *map;
 int get_diff(){
      clock_gettime(CLOCK_REALTIME, &spec);
      time_t seconds = spec.tv_sec;
-     long ms = round(spec.tv_nsec / 1.0e6);
+     long ms = round(spec.tv_nsec / 1.0e3);
      current = ms;
-     if(current > 50){
+     if(current - last > 5 || last - current > 5){
          last = current;
 	 return 1;
      }
@@ -104,7 +109,23 @@ void free_platforms(){
      }
 }
 
+void displayholytext(){
+         for(int i = 0; i < max_x; i++){
+	       char w[2];
+	       w[0] = (char)holy[(i+sacred_counter)%500];
+	       w[1] = '\0';
+               mvprintw(0,i,w);
+	 }
+	 if(current - textcurrent > 100000 || textcurrent - current > 100000){
+	       textcurrent = current;
+               sacred_counter++;
+	 }
+}
+
 int main(int argc, char *argv[]){
+	
+   holytext = fopen("oursaviour", "r");
+   fgets(holy,500,holytext);
    initscr();
    noecho();
    curs_set(FALSE);
@@ -158,6 +179,7 @@ int main(int argc, char *argv[]){
        p->y += p->v;
 
        draw_platforms();
+       displayholytext();
 
        mvprintw(max_y-1,0,"CURRENT: %lld LAST: %lld", current, last);
 
@@ -170,7 +192,7 @@ int main(int argc, char *argv[]){
 	  p->y = max_y - 1;
        }
 
-       mvprintw(0,0,"CHAR: %c",curinput);
+       //mvprintw(0,0,"CHAR: %c",curinput);
        mvprintw(p->y, p->x, ":^)");
        refresh();
        usleep(20000);
@@ -184,6 +206,7 @@ int main(int argc, char *argv[]){
    free(p);
    free_platforms();
    free(map);
+   fclose(holytext);
 
    endwin();
 }
